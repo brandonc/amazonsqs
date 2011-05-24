@@ -26,4 +26,9 @@ Create an instance of `AmazonSqs.ObjectQueue`:
 
     var mylist = queue.DequeueOne<List<string>>();
 
+    // or if you don't want to automatically delete message...
+
+    ObjectMessage<List<string>> msg = queue.Peek<List<string>>();
+    queue.DeleteMessage(msg.ReceiptHandle);
+
 *If you want to run the tests, make a copy of App.config.sample and name it App.config. Add your AWS credentials.*
