@@ -6,8 +6,8 @@ A higher-level interface to Amazon SQS for .NET. It features an object queue tha
 
 Add the following keys to your <appSettings> config section.
 
-`<add key="AWSAccessKey" value=""/>
-`<add key="AWSSecretKey" value=""/>
+    <add key="AWSAccessKey" value=""/>
+    <add key="AWSSecretKey" value=""/>
 
 If you want to run the tests, make a copy of App.config.sample and name it App.config. Add your AWS credentials.
 
