@@ -4,7 +4,7 @@ A higher-level interface to Amazon SQS for .NET. It features an object queue tha
 
 ## Installation
 
-Add the following keys to your <appSettings> config section.
+Add the following keys to your &lt;appSettings&gt; config section.
 
     <add key="AWSAccessKey" value=""/>
     <add key="AWSSecretKey" value=""/>
