@@ -75,7 +75,7 @@ namespace AmazonSqs {
             this.client.DeleteMessage(dmr);
         }
 
-        public void Enqueue(object submission) {
+        public void Enqueue<T>(T submission) where T : new() {
             try {
                 SendMessageRequest req = new SendMessageRequest();
                 req.QueueUrl = this.queueUrl;
@@ -101,7 +101,7 @@ namespace AmazonSqs {
             }
         }
 
-        public T DequeueOne<T>() {
+        public T DequeueOne<T>() where T : new() {
             var rmr = new ReceiveMessageRequest();
             rmr.QueueUrl = queueUrl;
 
@@ -121,7 +121,7 @@ namespace AmazonSqs {
             return default(T);
         }
 
-        public List<T> Dequeue<T>(int maxMessages = 1) {
+        public List<T> Dequeue<T>(int maxMessages = 1) where T : new() {
             if (maxMessages < 1 || maxMessages > 10) {
                 throw new ArgumentOutOfRangeException("maxMessages", "maxMessages must be between 1 and 10.");
             }

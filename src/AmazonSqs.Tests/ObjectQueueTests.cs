@@ -19,10 +19,6 @@ namespace AmazonSqs.Tests {
                 ConfigurationManager.AppSettings["AWSSecretKey"],
                 "AmazonSqs-ObjectQueue-UnitTests"
             );
-
-            // Clear queue
-            var trash = queue.Dequeue<TestObject>(10);
-            Debug.WriteLine("Disposing " + trash.Count + " items.");
         }
 
         [TestMethod]
@@ -31,6 +27,18 @@ namespace AmazonSqs.Tests {
                 ID = 1,
                 Name = "Object 1"
             });
+        }
+
+        [TestMethod]
+        public void CanEnqueueGenericList() {
+            queue.Enqueue(new List<string>(new string[] { "hello", "world", "how", "are", "you" }));
+        }
+
+        [Ignore]
+        [TestMethod]
+        public void CanDequeueGenericList() {
+            var list = queue.DequeueOne<List<string>>();
+            Assert.AreEqual<int>(5, list.Count);
         }
 
         [TestMethod]
