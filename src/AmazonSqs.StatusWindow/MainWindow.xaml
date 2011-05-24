@@ -1,0 +1,40 @@
+﻿<Window x:Class="AmazonSqs.Status.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="461" Width="718">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="22"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="22"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <TextBox Text="Queues" Grid.Row="0"/>
+
+        <DataGrid Name="gridMessages" Grid.Row="4" SelectionMode="Single" AutoGenerateColumns="False" SelectedCellsChanged="gridMessages_SelectedCellsChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Body" Binding="{ Binding Path=Body }"/>
+                <DataGridTextColumn Header="Sent" Binding="{ Binding Path=Sent }"/>
+                <DataGridTextColumn Header="Bounces" Binding="{ Binding Path=ApproximateReceiveCount }" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="6" HorizontalAlignment="Center">
+            <Button Name="buttonDeleteQueue" IsEnabled="False" Content="Delete Queue" Click="buttonDeleteQueue_Click" Margin="0,0, 8, 0" />
+            <Button Name="buttonRefresh" Content="Refresh" Click="buttonRefresh_Click" Margin="0,0, 8, 0"/>
+        </StackPanel>
+
+        <TextBox Text="Messages" Grid.Row="3"/>
+
+        <DataGrid Name="gridQueues" Grid.Row="1" SelectionMode="Single" SelectedCellsChanged="gridQueues_SelectedCellsChanged" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Path=Name }" />
+                <DataGridTextColumn Header="Url" Binding="{Binding Path=Url }" />
+                <DataGridTextColumn Header="Approx. Count" Binding="{ Binding Path=ApproximateNumberOfMessages }"/>
+                <DataGridTextColumn Header="Rentention" Binding="{ Binding Path=MessageRetentionPeriod }"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

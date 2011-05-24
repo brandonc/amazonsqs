@@ -1,0 +1,25 @@
+﻿<Window x:Class="AmazonSqs.Status.Config"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AWS Config" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" SizeToContent="WidthAndHeight">
+    <Grid Width="450" Height="155">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Content="AWS Access Key" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Right" Width="100" HorizontalAlignment="Left" Name="labelAccessKey"/>
+        <TextBox Name="textAccessKey" Margin="3,3,3,3" Grid.Row="1" Grid.Column="1"/>
+
+        <Label Content="AWS Secret Key" Grid.Row="2" VerticalAlignment="Center" HorizontalContentAlignment="Right" Width="100" HorizontalAlignment="Left" Name="labelSecretKey" />
+        <TextBox Name="textSecretKey" Margin="3,3,3,3" Grid.Row="2" Grid.Column="1"/>
+        
+        <Button Name="buttonSave" Content="OK" Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Center" Height="32" VerticalAlignment="Top" Margin="0,10,0,0" Width="100" Click="buttonSave_Click" />
+    </Grid>
+</Window>
