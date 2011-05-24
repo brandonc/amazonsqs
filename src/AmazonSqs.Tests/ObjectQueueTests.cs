@@ -22,11 +22,17 @@ namespace AmazonSqs.Tests {
         }
 
         [TestMethod]
-        public void CanQueueDequeueOneObject() {
+        public void CanQueueAndPeekOneObject() {
             queue.Enqueue(new TestObject() {
                 ID = 1,
                 Name = "Object 1"
             });
+
+            Thread.Sleep(10000);
+
+            ObjectMessage<TestObject> obj = queue.Peek<TestObject>();
+            Assert.IsNotNull(obj.Object);
+            Assert.AreEqual(1, obj.Object.ID);
         }
 
         [TestMethod]
@@ -42,7 +48,7 @@ namespace AmazonSqs.Tests {
         }
 
         [TestMethod]
-        public void CanQueueDequeueTwoObjects() {
+        public void CanQueueTwoObjects() {
             queue.Enqueue(new TestObject() {
                 ID = 2,
                 Name = "Object 2"

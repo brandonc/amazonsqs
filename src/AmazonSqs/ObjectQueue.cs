@@ -67,10 +67,10 @@ namespace AmazonSqs {
             queueExists = false;
         }
 
-        private void DeleteMessage(string handle) {
+        public void DeleteMessage(string receiptHandle) {
             var dmr = new DeleteMessageRequest();
             dmr.QueueUrl = queueUrl;
-            dmr.ReceiptHandle = handle;
+            dmr.ReceiptHandle = receiptHandle;
 
             this.client.DeleteMessage(dmr);
         }
@@ -101,24 +101,57 @@ namespace AmazonSqs {
             }
         }
 
+        public ObjectMessage<T> Peek<T>() where T : new() {
+            return Next<T>(false);
+
+        }
+
         public T DequeueOne<T>() where T : new() {
+            return Next<T>(true).Object;
+        }
+
+        private ObjectMessage<T> Next<T>(bool delete) where T : new() {
             var rmr = new ReceiveMessageRequest();
             rmr.QueueUrl = queueUrl;
+            rmr.AttributeName.Add("SentTimestamp");
+            rmr.AttributeName.Add("ApproximateReceiveCount");
+            rmr.AttributeName.Add("ApproximateFirstReceiveTimestamp");
 
             var response = this.client.ReceiveMessage(rmr);
+
             if (response.IsSetReceiveMessageResult()) {
                 var result = response.ReceiveMessageResult;
-                
-                if(result.IsSetMessage() && result.Message.Count > 0) {
+
+                if (result.IsSetMessage() && result.Message.Count > 0) {
+                    ObjectMessage<T> value = new ObjectMessage<T>();
                     Message m = result.Message[0];
-                    T value = this.Serializer.Deserialize<T>(m.Body);
-                    DeleteMessage(m.ReceiptHandle);
+                    DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                    value.Object = this.Serializer.Deserialize<T>(m.Body);
+
+                    if (m.IsSetAttribute()) {
+                        foreach (Amazon.SQS.Model.Attribute att in m.Attribute) {
+                            switch (att.Name) {
+                                case "SentTimestamp":
+                                    value.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
+                                    break;
+                                case "ApproximateReceiveCount":
+                                    value.ApproximateReceiveCount = Int32.Parse(att.Value);
+                                    break;
+                                case "ApproximateFirstReceiveTimestamp":
+                                    value.FirstReceived = epochDate.AddMilliseconds(double.Parse(att.Value));
+                                    break;
+                            }
+                        }
+                    }
+
+                    if(delete)
+                        DeleteMessage(m.ReceiptHandle);
 
                     return value;
                 }
             }
 
-            return default(T);
+            return default(ObjectMessage<T>);
         }
 
         public List<T> Dequeue<T>(int maxMessages = 1) where T : new() {
