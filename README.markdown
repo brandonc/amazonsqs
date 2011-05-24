@@ -9,14 +9,21 @@ Add the following keys to your &lt;appSettings&gt; config section.
     <add key="AWSAccessKey" value=""/>
     <add key="AWSSecretKey" value=""/>
 
-Then you can create an instance of `AmazonSqs.ObjectQueue`:
 
-    AmazonSqs.ObjectQueue oq = new AmazonSqs.ObjectQueue(
+## Example Usage
+
+Create an instance of `AmazonSqs.ObjectQueue`:
+
+    AmazonSqs.ObjectQueue queue = new AmazonSqs.ObjectQueue(
         ConfigurationManager.AppSettings["AWSAccessKey"],
         ConfigurationManager.AppSettings["AWSSecretKey"],
         "MyQueue"
     );
 
-    oq.Enqueue(new Tuple<string, string>("Hello", "World"));
+    queue.Enqueue<List<string>>(new List<string>(new string[] { "Hello", "World", "Bro" }));
+
+    // Meanwhile in another place and at another time...
+
+    var mylist = queue.DequeueOne<List<string>>();
 
 *If you want to run the tests, make a copy of App.config.sample and name it App.config. Add your AWS credentials.*
