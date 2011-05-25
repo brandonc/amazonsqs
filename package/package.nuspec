@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>amazonsqs</id>
-    <version>0.3</version>
+    <version>0.4</version>
     <authors>Brandon Croft</authors>
     <owners>Brandon Croft</owners>
     <licenseUrl>https://github.com/brandonc/amazonsqs/raw/master/LICENSE.txt</licenseUrl>

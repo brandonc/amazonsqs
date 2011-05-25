@@ -127,6 +127,7 @@ namespace AmazonSqs {
                     Message m = result.Message[0];
                     DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
                     value.Object = this.Serializer.Deserialize<T>(m.Body);
+                    value.ReceiptHandle = m.ReceiptHandle;
 
                     if (m.IsSetAttribute()) {
                         foreach (Amazon.SQS.Model.Attribute att in m.Attribute) {
