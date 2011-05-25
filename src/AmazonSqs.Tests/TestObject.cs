@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Web.Script.Serialization;
 
 namespace AmazonSqs.Tests {
     public class TestObject {
@@ -9,6 +10,8 @@ namespace AmazonSqs.Tests {
         public string Name { get; set; }
 
         public TestObject NestedObject { get; set; }
-        public string IgnoredProperty { get { return "Hello, Ignored Property!"; } }
+
+        [ScriptIgnore]
+        public string IgnoredProperty { get; set; }
     }
 }

@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmazonSqs.Status", "AmazonSqs.StatusWindow\AmazonSqs.Status.csproj", "{287FF221-AE5D-441E-BA3A-F0B4CF6492A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmazonSqs.Status", "AmazonSqs.Status\AmazonSqs.Status.csproj", "{287FF221-AE5D-441E-BA3A-F0B4CF6492A9}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution

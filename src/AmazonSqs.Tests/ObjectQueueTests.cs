@@ -22,29 +22,17 @@ namespace AmazonSqs.Tests {
         }
 
         [TestMethod]
-        public void CanQueueAndPeekOneObject() {
+        public void CanQueueOneObject() {
             queue.Enqueue(new TestObject() {
                 ID = 1,
-                Name = "Object 1"
+                Name = "Object 1",
+                IgnoredProperty = "Not available!"
             });
-
-            Thread.Sleep(10000);
-
-            ObjectMessage<TestObject> obj = queue.Peek<TestObject>();
-            Assert.IsNotNull(obj.Object);
-            Assert.AreEqual(1, obj.Object.ID);
         }
 
         [TestMethod]
         public void CanEnqueueGenericList() {
             queue.Enqueue(new List<string>(new string[] { "hello", "world", "how", "are", "you" }));
-        }
-
-        [Ignore]
-        [TestMethod]
-        public void CanDequeueGenericList() {
-            var list = queue.DequeueOne<List<string>>();
-            Assert.AreEqual<int>(5, list.Count);
         }
 
         [TestMethod]
