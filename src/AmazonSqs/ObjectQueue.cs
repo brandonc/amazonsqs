@@ -67,6 +67,14 @@ namespace AmazonSqs {
             queueExists = false;
         }
 
+        public int GetMessageCount()
+        {
+            var sqsRequest = new GetQueueAttributesRequest { QueueUrl = queueUrl };
+            sqsRequest.AttributeName.Add("ApproximateNumberOfMessages");
+            var sqsResponse = client.GetQueueAttributes(sqsRequest);
+            return sqsResponse.GetQueueAttributesResult.ApproximateNumberOfMessages;
+        }
+
         public void DeleteMessage(string receiptHandle) {
             var dmr = new DeleteMessageRequest();
             dmr.QueueUrl = queueUrl;
