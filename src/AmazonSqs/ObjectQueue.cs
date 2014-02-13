@@ -63,14 +63,10 @@ namespace AmazonSqs {
 
             var lqr = new ListQueuesRequest();
             var queues = client.ListQueues(lqr);
-
-            if (queues.IsSetListQueuesResult()) {
-                foreach (string queue in queues.ListQueuesResult.QueueUrl) {
-                    if (queue == this.queueUrl) {
-                        queueExists = true;
-
-                        return;
-                    }
+            foreach (string queue in queues.QueueUrls) {
+                if (queue == this.queueUrl) {
+                    queueExists = true;
+                    return;
                 }
             }
 
