@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web.Script.Serialization;
 using Amazon;
 using Amazon.SQS;
@@ -127,43 +128,37 @@ namespace AmazonSqs {
         private ObjectMessage<T> Next<T>(bool delete) where T : new() {
             var rmr = new ReceiveMessageRequest();
             rmr.QueueUrl = queueUrl;
-            rmr.AttributeName.Add("SentTimestamp");
-            rmr.AttributeName.Add("ApproximateReceiveCount");
-            rmr.AttributeName.Add("ApproximateFirstReceiveTimestamp");
+            rmr.AttributeNames.Add("SentTimestamp");
+            rmr.AttributeNames.Add("ApproximateReceiveCount");
+            rmr.AttributeNames.Add("ApproximateFirstReceiveTimestamp");
 
             var response = this.client.ReceiveMessage(rmr);
+            if (response.Messages.Any())
+            {
+                ObjectMessage<T> value = new ObjectMessage<T>();
+                Message m = response.Messages[0];
+                DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                value.Object = this.Serializer.Deserialize<T>(m.Body);
+                value.ReceiptHandle = m.ReceiptHandle;
 
-            if (response.IsSetReceiveMessageResult()) {
-                var result = response.ReceiveMessageResult;
-
-                if (result.IsSetMessage() && result.Message.Count > 0) {
-                    ObjectMessage<T> value = new ObjectMessage<T>();
-                    Message m = result.Message[0];
-                    DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    value.Object = this.Serializer.Deserialize<T>(m.Body);
-                    value.ReceiptHandle = m.ReceiptHandle;
-
-                    if (m.IsSetAttribute()) {
-                        foreach (Amazon.SQS.Model.Attribute att in m.Attribute) {
-                            switch (att.Name) {
-                                case "SentTimestamp":
-                                    value.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
-                                    break;
-                                case "ApproximateReceiveCount":
-                                    value.ApproximateReceiveCount = Int32.Parse(att.Value);
-                                    break;
-                                case "ApproximateFirstReceiveTimestamp":
-                                    value.FirstReceived = epochDate.AddMilliseconds(double.Parse(att.Value));
-                                    break;
-                            }
-                        }
+                foreach (KeyValuePair<string, string> att in m.Attributes) {
+                    switch (att.Key) {
+                        case "SentTimestamp":
+                            value.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
+                            break;
+                        case "ApproximateReceiveCount":
+                            value.ApproximateReceiveCount = Int32.Parse(att.Value);
+                            break;
+                        case "ApproximateFirstReceiveTimestamp":
+                            value.FirstReceived = epochDate.AddMilliseconds(double.Parse(att.Value));
+                            break;
                     }
-
-                    if(delete)
-                        DeleteMessage(m.ReceiptHandle);
-
-                    return value;
                 }
+
+                if(delete)
+                    DeleteMessage(m.ReceiptHandle);
+
+                return value;
             }
 
             return default(ObjectMessage<T>);
