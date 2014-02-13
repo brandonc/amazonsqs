@@ -76,9 +76,9 @@ namespace AmazonSqs {
         public int GetMessageCount()
         {
             var sqsRequest = new GetQueueAttributesRequest { QueueUrl = queueUrl };
-            sqsRequest.AttributeName.Add("ApproximateNumberOfMessages");
+            sqsRequest.AttributeNames.Add("ApproximateNumberOfMessages");
             var sqsResponse = client.GetQueueAttributes(sqsRequest);
-            return sqsResponse.GetQueueAttributesResult.ApproximateNumberOfMessages;
+            return sqsResponse.ApproximateNumberOfMessages;
         }
 
         public void DeleteMessage(string receiptHandle) {
