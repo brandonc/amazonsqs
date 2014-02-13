@@ -176,17 +176,11 @@ namespace AmazonSqs {
             List<T> retval = new List<T>();
 
             var response = this.client.ReceiveMessage(rmr);
-            if (response.IsSetReceiveMessageResult()) {
-                var result = response.ReceiveMessageResult;
-
-                if (result.IsSetMessage()) {
-                    retval.Capacity = result.Message.Count;
-                    foreach (Message m in result.Message) {
-                        T value = this.Serializer.Deserialize<T>(m.Body);
-                        DeleteMessage(m.ReceiptHandle);
-                        retval.Add(value);
-                    }
-                }
+            retval.Capacity = response.Messages.Count;
+            foreach (Message m in response.Messages) {
+                T value = this.Serializer.Deserialize<T>(m.Body);
+                DeleteMessage(m.ReceiptHandle);
+                retval.Add(value);
             }
 
             return retval;
