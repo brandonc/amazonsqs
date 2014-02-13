@@ -64,10 +64,12 @@ namespace AmazonSqs {
 
             var lqr = new ListQueuesRequest();
             var queues = client.ListQueues(lqr);
-            foreach (string queue in queues.QueueUrls) {
-                if (queue == this.queueUrl) {
-                    queueExists = true;
-                    return;
+            if (queues.QueueUrls != null) {
+                foreach (string queue in queues.QueueUrls) {
+                    if (queue == this.queueUrl) {
+                        queueExists = true;
+                        return;
+                    }
                 }
             }
 
@@ -133,7 +135,7 @@ namespace AmazonSqs {
             rmr.AttributeNames.Add("ApproximateFirstReceiveTimestamp");
 
             var response = this.client.ReceiveMessage(rmr);
-            if (response.Messages.Any())
+            if (response.Messages != null && response.Messages.Any())
             {
                 ObjectMessage<T> value = new ObjectMessage<T>();
                 Message m = response.Messages[0];
@@ -176,11 +178,13 @@ namespace AmazonSqs {
             List<T> retval = new List<T>();
 
             var response = this.client.ReceiveMessage(rmr);
-            retval.Capacity = response.Messages.Count;
-            foreach (Message m in response.Messages) {
-                T value = this.Serializer.Deserialize<T>(m.Body);
-                DeleteMessage(m.ReceiptHandle);
-                retval.Add(value);
+            if (response.Messages != null && response.Messages.Any()) {
+                retval.Capacity = response.Messages.Count;
+                foreach (Message m in response.Messages) {
+                    T value = this.Serializer.Deserialize<T>(m.Body);
+                    DeleteMessage(m.ReceiptHandle);
+                    retval.Add(value);
+                }
             }
 
             return retval;
