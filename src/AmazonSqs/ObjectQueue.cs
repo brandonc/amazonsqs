@@ -11,7 +11,7 @@ namespace AmazonSqs {
 
         private const int MAX_MESSAGE_SIZE = 262144; // 256K
 
-        private readonly AmazonSQS client;
+        private readonly IAmazonSQS client;
         private readonly string queueUrl;
 
         private bool? queueExists = null;
@@ -27,11 +27,21 @@ namespace AmazonSqs {
             var cqr = new CreateQueueRequest();
             cqr.QueueName = queueName;
 
-            var response = this.client.CreateQueue(cqr);
-            if (response.IsSetCreateQueueResult()) {
-                this.queueUrl = response.CreateQueueResult.QueueUrl;
-            } else {
-                throw new QueueException("Queue could not be created.");
+            try
+            {
+                var response = this.client.CreateQueue(cqr);
+                if (!string.IsNullOrEmpty(response.QueueUrl))
+                {
+                    this.queueUrl = response.QueueUrl;
+                }
+                else
+                {
+                    throw new QueueException("Queue could not be created.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new QueueException("Queue could not be created.", ex);
             }
         }
 
