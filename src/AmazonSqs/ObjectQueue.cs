@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web.Script.Serialization;
 using Amazon;
 using Amazon.SQS;
@@ -11,7 +12,7 @@ namespace AmazonSqs {
 
         private const int MAX_MESSAGE_SIZE = 262144; // 256K
 
-        private readonly AmazonSQS client;
+        private readonly IAmazonSQS client;
         private readonly string queueUrl;
 
         private bool? queueExists = null;
@@ -27,11 +28,21 @@ namespace AmazonSqs {
             var cqr = new CreateQueueRequest();
             cqr.QueueName = queueName;
 
-            var response = this.client.CreateQueue(cqr);
-            if (response.IsSetCreateQueueResult()) {
-                this.queueUrl = response.CreateQueueResult.QueueUrl;
-            } else {
-                throw new QueueException("Queue could not be created.");
+            try
+            {
+                var response = this.client.CreateQueue(cqr);
+                if (!string.IsNullOrEmpty(response.QueueUrl))
+                {
+                    this.queueUrl = response.QueueUrl;
+                }
+                else
+                {
+                    throw new QueueException("Queue could not be created.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new QueueException("Queue could not be created.", ex);
             }
         }
 
@@ -53,12 +64,10 @@ namespace AmazonSqs {
 
             var lqr = new ListQueuesRequest();
             var queues = client.ListQueues(lqr);
-
-            if (queues.IsSetListQueuesResult()) {
-                foreach (string queue in queues.ListQueuesResult.QueueUrl) {
+            if (queues.QueueUrls != null) {
+                foreach (string queue in queues.QueueUrls) {
                     if (queue == this.queueUrl) {
                         queueExists = true;
-
                         return;
                     }
                 }
@@ -70,9 +79,9 @@ namespace AmazonSqs {
         public int GetMessageCount()
         {
             var sqsRequest = new GetQueueAttributesRequest { QueueUrl = queueUrl };
-            sqsRequest.AttributeName.Add("ApproximateNumberOfMessages");
+            sqsRequest.AttributeNames.Add("ApproximateNumberOfMessages");
             var sqsResponse = client.GetQueueAttributes(sqsRequest);
-            return sqsResponse.GetQueueAttributesResult.ApproximateNumberOfMessages;
+            return sqsResponse.ApproximateNumberOfMessages;
         }
 
         public void DeleteMessage(string receiptHandle) {
@@ -121,43 +130,37 @@ namespace AmazonSqs {
         private ObjectMessage<T> Next<T>(bool delete) where T : new() {
             var rmr = new ReceiveMessageRequest();
             rmr.QueueUrl = queueUrl;
-            rmr.AttributeName.Add("SentTimestamp");
-            rmr.AttributeName.Add("ApproximateReceiveCount");
-            rmr.AttributeName.Add("ApproximateFirstReceiveTimestamp");
+            rmr.AttributeNames.Add("SentTimestamp");
+            rmr.AttributeNames.Add("ApproximateReceiveCount");
+            rmr.AttributeNames.Add("ApproximateFirstReceiveTimestamp");
 
             var response = this.client.ReceiveMessage(rmr);
+            if (response.Messages != null && response.Messages.Any())
+            {
+                ObjectMessage<T> value = new ObjectMessage<T>();
+                Message m = response.Messages[0];
+                DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                value.Object = this.Serializer.Deserialize<T>(m.Body);
+                value.ReceiptHandle = m.ReceiptHandle;
 
-            if (response.IsSetReceiveMessageResult()) {
-                var result = response.ReceiveMessageResult;
-
-                if (result.IsSetMessage() && result.Message.Count > 0) {
-                    ObjectMessage<T> value = new ObjectMessage<T>();
-                    Message m = result.Message[0];
-                    DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    value.Object = this.Serializer.Deserialize<T>(m.Body);
-                    value.ReceiptHandle = m.ReceiptHandle;
-
-                    if (m.IsSetAttribute()) {
-                        foreach (Amazon.SQS.Model.Attribute att in m.Attribute) {
-                            switch (att.Name) {
-                                case "SentTimestamp":
-                                    value.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
-                                    break;
-                                case "ApproximateReceiveCount":
-                                    value.ApproximateReceiveCount = Int32.Parse(att.Value);
-                                    break;
-                                case "ApproximateFirstReceiveTimestamp":
-                                    value.FirstReceived = epochDate.AddMilliseconds(double.Parse(att.Value));
-                                    break;
-                            }
-                        }
+                foreach (KeyValuePair<string, string> att in m.Attributes) {
+                    switch (att.Key) {
+                        case "SentTimestamp":
+                            value.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
+                            break;
+                        case "ApproximateReceiveCount":
+                            value.ApproximateReceiveCount = Int32.Parse(att.Value);
+                            break;
+                        case "ApproximateFirstReceiveTimestamp":
+                            value.FirstReceived = epochDate.AddMilliseconds(double.Parse(att.Value));
+                            break;
                     }
-
-                    if(delete)
-                        DeleteMessage(m.ReceiptHandle);
-
-                    return value;
                 }
+
+                if(delete)
+                    DeleteMessage(m.ReceiptHandle);
+
+                return value;
             }
 
             return default(ObjectMessage<T>);
@@ -175,16 +178,12 @@ namespace AmazonSqs {
             List<T> retval = new List<T>();
 
             var response = this.client.ReceiveMessage(rmr);
-            if (response.IsSetReceiveMessageResult()) {
-                var result = response.ReceiveMessageResult;
-
-                if (result.IsSetMessage()) {
-                    retval.Capacity = result.Message.Count;
-                    foreach (Message m in result.Message) {
-                        T value = this.Serializer.Deserialize<T>(m.Body);
-                        DeleteMessage(m.ReceiptHandle);
-                        retval.Add(value);
-                    }
+            if (response.Messages != null && response.Messages.Any()) {
+                retval.Capacity = response.Messages.Count;
+                foreach (Message m in response.Messages) {
+                    T value = this.Serializer.Deserialize<T>(m.Body);
+                    DeleteMessage(m.ReceiptHandle);
+                    retval.Add(value);
                 }
             }
 

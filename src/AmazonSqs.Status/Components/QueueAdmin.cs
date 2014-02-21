@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 
 namespace AmazonSqs.Status.Components {
     class QueueAdmin {
-        private readonly AmazonSQS client;
+        private readonly IAmazonSQS client;
 
         public ObservableCollection<QueueDescription> ListQueues() {
             var lqr = new ListQueuesRequest();
@@ -17,14 +17,12 @@ namespace AmazonSqs.Status.Components {
 
             var result = new ObservableCollection<QueueDescription>();
 
-            if (response.IsSetListQueuesResult() && response.ListQueuesResult.IsSetQueueUrl()) {
-                foreach (string url in response.ListQueuesResult.QueueUrl) {
-                    string name = url.Substring(url.LastIndexOf('/') + 1);
-                    result.Add(new QueueDescription() {
-                        Name = name,
-                        Url = url
-                    });
-                }
+            foreach (string url in response.QueueUrls) {
+                string name = url.Substring(url.LastIndexOf('/') + 1);
+                result.Add(new QueueDescription() {
+                    Name = name,
+                    Url = url
+                });
             }
 
             return result;
@@ -52,14 +50,13 @@ namespace AmazonSqs.Status.Components {
                 QueueUrl = queue.Url
             };
 
-            req.AttributeName.Add("ApproximateNumberOfMessages");
-            req.AttributeName.Add("MessageRetentionPeriod");
+            req.AttributeNames.Add("ApproximateNumberOfMessages");
+            req.AttributeNames.Add("MessageRetentionPeriod");
 
             var response = client.GetQueueAttributes(req);
-            var result = new Dictionary<string, string>(10);
-            if (response.IsSetGetQueueAttributesResult() && response.GetQueueAttributesResult.IsSetAttribute()) {
-                foreach (Amazon.SQS.Model.Attribute att in response.GetQueueAttributesResult.Attribute) {
-                    switch (att.Name) {
+            if (response.Attributes != null && response.Attributes.Any()) {
+                foreach (KeyValuePair<string, string> att in response.Attributes) {
+                    switch (att.Key) {
                         case "MessageRetentionPeriod":
                             queue.MessageRetentionPeriod = TimeSpan.FromSeconds(Double.Parse(att.Value));
                             break;
@@ -77,23 +74,23 @@ namespace AmazonSqs.Status.Components {
                 QueueUrl = queueUrl
             };
 
-            req.AttributeName.Add("SentTimestamp");
-            req.AttributeName.Add("ApproximateReceiveCount");
-            req.AttributeName.Add("ApproximateFirstReceiveTimestamp");
+            req.AttributeNames.Add("SentTimestamp");
+            req.AttributeNames.Add("ApproximateReceiveCount");
+            req.AttributeNames.Add("ApproximateFirstReceiveTimestamp");
 
             var result = new List<QueueMessage>(10);
             var response = client.ReceiveMessage(req);
-            if (response.IsSetReceiveMessageResult() && response.ReceiveMessageResult.IsSetMessage()) {
+            if (response.Messages != null && response.Messages.Any()) {
                 DateTime epochDate = new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc);
-                foreach (Message msg in response.ReceiveMessageResult.Message) {
-                    var qm = new QueueMessage() {
+                foreach (Message msg in response.Messages) {
+                    var qm = new QueueMessage {
                         Body = msg.Body,
                         ReceiptHandle = msg.ReceiptHandle
                     };
 
-                    if (msg.IsSetAttribute()) {
-                        foreach (Amazon.SQS.Model.Attribute att in msg.Attribute) {
-                            switch (att.Name) {
+                    if (msg.Attributes != null && msg.Attributes.Any()) {
+                        foreach (KeyValuePair<string, string> att in msg.Attributes) {
+                            switch (att.Key) {
                                 case "SentTimestamp":
                                     qm.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
                                     break;
