@@ -166,22 +166,25 @@ namespace AmazonSqs {
             return default(ObjectMessage<T>);
         }
 
-        public List<T> Dequeue<T>(int maxMessages = 1) where T : new() {
-            if (maxMessages < 1 || maxMessages > 10) {
-                throw new ArgumentOutOfRangeException("maxMessages", "maxMessages must be between 1 and 10.");
+        /// <summary>
+        /// Retrieves up to <paramref name="maxMessagesToProcess"/> messages from the queue and deletes the messages.
+        /// </summary>
+        /// <typeparam name="T">Deserialization type of message. Must be between 1 and 10.</typeparam>
+        /// <param name="maxMessagesToProcess">The maximum number of messages to process</param>
+        /// <returns>List of Messages retrieved from queue, deserialized to Type <see cref="T"/></returns>
+        public List<T> Dequeue<T>(int maxMessagesToProcess = 1) where T : new() {
+            if (maxMessagesToProcess < 1 || maxMessagesToProcess > 10) {
+                throw new ArgumentOutOfRangeException("maxMessagesToProcess", "maxMessages must be between 1 and 10.");
             }
 
-            var rmr = new ReceiveMessageRequest();
-            rmr.QueueUrl = queueUrl;
-            rmr.MaxNumberOfMessages = maxMessages;
-
+            var rmr = new ReceiveMessageRequest {QueueUrl = queueUrl, MaxNumberOfMessages = maxMessagesToProcess};
             List<T> retval = new List<T>();
 
-            var response = this.client.ReceiveMessage(rmr);
+            var response = client.ReceiveMessage(rmr);
             if (response.Messages != null && response.Messages.Any()) {
                 retval.Capacity = response.Messages.Count;
                 foreach (Message m in response.Messages) {
-                    T value = this.Serializer.Deserialize<T>(m.Body);
+                    T value = Serializer.Deserialize<T>(m.Body);
                     DeleteMessage(m.ReceiptHandle);
                     retval.Add(value);
                 }
