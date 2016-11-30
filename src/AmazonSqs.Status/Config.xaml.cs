@@ -19,17 +19,17 @@ namespace AmazonSqs.Status {
         public Config() {
             InitializeComponent();
 
-            this.textAccessKey.Text = Properties.Settings.Default.AwsAccessKey;
-            this.textSecretKey.Text = Properties.Settings.Default.AwsSecretKey;
+            textAccessKey.Text = Properties.Settings.Default.AwsAccessKey;
+            textSecretKey.Text = Properties.Settings.Default.AwsSecretKey;
         }
 
         private void buttonSave_Click(object sender, RoutedEventArgs e) {
-            Properties.Settings.Default.AwsAccessKey = this.textAccessKey.Text;
-            Properties.Settings.Default.AwsSecretKey = this.textSecretKey.Text;
+            Properties.Settings.Default.AwsAccessKey = textAccessKey.Text;
+            Properties.Settings.Default.AwsSecretKey = textSecretKey.Text;
 
             Properties.Settings.Default.Save();
 
-            this.Close();
+            Close();
         }
     }
 }

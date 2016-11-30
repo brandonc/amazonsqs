@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Script.Serialization;
-using Amazon;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 
@@ -10,30 +9,29 @@ namespace AmazonSqs {
     public class ObjectQueue {
         private static readonly Lazy<JavaScriptSerializer> serializer = new Lazy<JavaScriptSerializer>();
 
-        private const int MAX_MESSAGE_SIZE = 262144; // 256K
+        private const int MaxMessageSize = 262144; // 256K
 
-        private readonly IAmazonSQS client;
-        private readonly string queueUrl;
+        private readonly IAmazonSQS _client;
+        private readonly string _queueUrl;
 
-        private bool? queueExists = null;
+        private bool? _queueExists;
 
         public ObjectQueue(string awsAccessKey, string awsSecretKey, string queueName) {
-            this.client = AWSClientFactory.CreateAmazonSQSClient(
+            _client = new AmazonSQSClient(
                 awsAccessKey,
                 awsSecretKey
             );
 
             EnsureQueueExists();
 
-            var cqr = new CreateQueueRequest();
-            cqr.QueueName = queueName;
+	        var cqr = new CreateQueueRequest {QueueName = queueName};
 
-            try
+	        try
             {
-                var response = this.client.CreateQueue(cqr);
+                var response = _client.CreateQueue(cqr);
                 if (!string.IsNullOrEmpty(response.QueueUrl))
                 {
-                    this.queueUrl = response.QueueUrl;
+                    _queueUrl = response.QueueUrl;
                 }
                 else
                 {
@@ -49,57 +47,61 @@ namespace AmazonSqs {
         private JavaScriptSerializer Serializer {
             get {
                 if (!serializer.IsValueCreated) {
-                    serializer.Value.MaxJsonLength = MAX_MESSAGE_SIZE;
+                    serializer.Value.MaxJsonLength = MaxMessageSize;
                 }
                 return serializer.Value;
             }
         }
 
         private void EnsureQueueExists() {
-            if (queueExists.HasValue && queueExists.Value) {
+            if (_queueExists.HasValue && _queueExists.Value) {
                 return;
-            } else if (queueExists.HasValue && !queueExists.Value) {
-                throw new QueueException("Queue is not available or could not be created.");
             }
+	        if (_queueExists.HasValue && !_queueExists.Value) {
+		        throw new QueueException("Queue is not available or could not be created.");
+	        }
 
-            var lqr = new ListQueuesRequest();
-            var queues = client.ListQueues(lqr);
+	        var lqr = new ListQueuesRequest();
+            var queues = _client.ListQueues(lqr);
             if (queues.QueueUrls != null) {
                 foreach (string queue in queues.QueueUrls) {
-                    if (queue == this.queueUrl) {
-                        queueExists = true;
+                    if (queue == _queueUrl) {
+                        _queueExists = true;
                         return;
                     }
                 }
             }
 
-            queueExists = false;
+            _queueExists = false;
         }
 
         public int GetMessageCount()
         {
-            var sqsRequest = new GetQueueAttributesRequest { QueueUrl = queueUrl };
+            var sqsRequest = new GetQueueAttributesRequest { QueueUrl = _queueUrl };
             sqsRequest.AttributeNames.Add("ApproximateNumberOfMessages");
-            var sqsResponse = client.GetQueueAttributes(sqsRequest);
+            var sqsResponse = _client.GetQueueAttributes(sqsRequest);
             return sqsResponse.ApproximateNumberOfMessages;
         }
 
         public void DeleteMessage(string receiptHandle) {
-            var dmr = new DeleteMessageRequest();
-            dmr.QueueUrl = queueUrl;
-            dmr.ReceiptHandle = receiptHandle;
+	        var dmr = new DeleteMessageRequest
+	        {
+		        QueueUrl = _queueUrl,
+		        ReceiptHandle = receiptHandle
+	        };
 
-            this.client.DeleteMessage(dmr);
+	        _client.DeleteMessage(dmr);
         }
 
         public void Enqueue<T>(T submission) where T : new() {
             try {
-                SendMessageRequest req = new SendMessageRequest();
-                req.QueueUrl = this.queueUrl;
+	            SendMessageRequest req = new SendMessageRequest
+	            {
+		            QueueUrl = _queueUrl,
+		            MessageBody = Serializer.Serialize(submission)
+	            };
 
-                req.MessageBody = this.Serializer.Serialize(submission);
-
-                client.SendMessage(req);
+	            _client.SendMessage(req);
             } catch (AmazonSQSException ex) {
                 throw new QueueException(
                     "Could not queue request.",
@@ -129,18 +131,18 @@ namespace AmazonSqs {
 
         private ObjectMessage<T> Next<T>(bool delete) where T : new() {
             var rmr = new ReceiveMessageRequest();
-            rmr.QueueUrl = queueUrl;
+            rmr.QueueUrl = _queueUrl;
             rmr.AttributeNames.Add("SentTimestamp");
             rmr.AttributeNames.Add("ApproximateReceiveCount");
             rmr.AttributeNames.Add("ApproximateFirstReceiveTimestamp");
 
-            var response = this.client.ReceiveMessage(rmr);
+            var response = _client.ReceiveMessage(rmr);
             if (response.Messages != null && response.Messages.Any())
             {
                 ObjectMessage<T> value = new ObjectMessage<T>();
                 Message m = response.Messages[0];
                 DateTime epochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                value.Object = this.Serializer.Deserialize<T>(m.Body);
+                value.Object = Serializer.Deserialize<T>(m.Body);
                 value.ReceiptHandle = m.ReceiptHandle;
 
                 foreach (KeyValuePair<string, string> att in m.Attributes) {
@@ -174,13 +176,13 @@ namespace AmazonSqs {
         /// <returns>List of Messages retrieved from queue, deserialized to Type <see cref="T"/></returns>
         public List<T> Dequeue<T>(int maxMessagesToProcess = 1) where T : new() {
             if (maxMessagesToProcess < 1 || maxMessagesToProcess > 10) {
-                throw new ArgumentOutOfRangeException("maxMessagesToProcess", "maxMessages must be between 1 and 10.");
+                throw new ArgumentOutOfRangeException(nameof(maxMessagesToProcess), "maxMessages must be between 1 and 10.");
             }
 
-            var rmr = new ReceiveMessageRequest {QueueUrl = queueUrl, MaxNumberOfMessages = maxMessagesToProcess};
+            var rmr = new ReceiveMessageRequest {QueueUrl = _queueUrl, MaxNumberOfMessages = maxMessagesToProcess};
             List<T> retval = new List<T>();
 
-            var response = client.ReceiveMessage(rmr);
+            var response = _client.ReceiveMessage(rmr);
             if (response.Messages != null && response.Messages.Any()) {
                 retval.Capacity = response.Messages.Count;
                 foreach (Message m in response.Messages) {

@@ -1,20 +1,15 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Configuration;
-using System.Threading;
-using System.Diagnostics;
 
 namespace AmazonSqs.Tests {
     [TestClass]
     public class ObjectQueueTests {
-        private static ObjectQueue queue;
+        private static ObjectQueue _queue;
 
         [ClassInitialize]
         public static void OpenQueue(TestContext testContext) {
-            queue = new ObjectQueue(
+            _queue = new ObjectQueue(
                 ConfigurationManager.AppSettings["AWSAccessKey"],
                 ConfigurationManager.AppSettings["AWSSecretKey"],
                 "AmazonSqs-ObjectQueue-UnitTests"
@@ -23,7 +18,7 @@ namespace AmazonSqs.Tests {
 
         [TestMethod]
         public void CanQueueOneObject() {
-            queue.Enqueue(new TestObject() {
+            _queue.Enqueue(new TestObject() {
                 ID = 1,
                 Name = "Object 1",
                 IgnoredProperty = "Not available!"
@@ -32,17 +27,17 @@ namespace AmazonSqs.Tests {
 
         [TestMethod]
         public void CanEnqueueGenericList() {
-            queue.Enqueue(new List<string>(new string[] { "hello", "world", "how", "are", "you" }));
+            _queue.Enqueue(new List<string>(new[] { "hello", "world", "how", "are", "you" }));
         }
 
         [TestMethod]
         public void CanQueueTwoObjects() {
-            queue.Enqueue(new TestObject() {
+            _queue.Enqueue(new TestObject() {
                 ID = 2,
                 Name = "Object 2"
             });
 
-            queue.Enqueue(new TestObject() {
+            _queue.Enqueue(new TestObject() {
                 ID = 3,
                 Name = "Object 3",
                 NestedObject = new TestObject() {
@@ -67,7 +62,7 @@ namespace AmazonSqs.Tests {
             o1.NestedObject = o2;
             o2.NestedObject = o1;
 
-            queue.Enqueue(o1);
+            _queue.Enqueue(o1);
         }
 
         [TestMethod]
@@ -80,7 +75,7 @@ namespace AmazonSqs.Tests {
                 Name = bigstring
             };
 
-            queue.Enqueue(toobig);
+            _queue.Enqueue(toobig);
         }
     }
 }

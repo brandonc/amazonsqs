@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Amazon;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using System.Collections.ObjectModel;
 
 namespace AmazonSqs.Status.Components {
     class QueueAdmin {
-        private readonly IAmazonSQS client;
+        private readonly IAmazonSQS _client;
 
         public ObservableCollection<QueueDescription> ListQueues() {
             var lqr = new ListQueuesRequest();
-            var response = this.client.ListQueues(lqr);
+            var response = _client.ListQueues(lqr);
 
             var result = new ObservableCollection<QueueDescription>();
 
@@ -33,7 +31,7 @@ namespace AmazonSqs.Status.Components {
                 QueueUrl = url
             };
 
-            client.DeleteQueue(req);
+            _client.DeleteQueue(req);
         }
 
         public void DeleteMessage(string queueUrl, string receiptHandle) {
@@ -42,7 +40,7 @@ namespace AmazonSqs.Status.Components {
                 ReceiptHandle = receiptHandle
             };
 
-            client.DeleteMessage(req);
+            _client.DeleteMessage(req);
         }
 
         public void PopulateQueueAttributes(QueueDescription queue) {
@@ -53,7 +51,7 @@ namespace AmazonSqs.Status.Components {
             req.AttributeNames.Add("ApproximateNumberOfMessages");
             req.AttributeNames.Add("MessageRetentionPeriod");
 
-            var response = client.GetQueueAttributes(req);
+            var response = _client.GetQueueAttributes(req);
             if (response.Attributes != null && response.Attributes.Any()) {
                 foreach (KeyValuePair<string, string> att in response.Attributes) {
                     switch (att.Key) {
@@ -79,7 +77,7 @@ namespace AmazonSqs.Status.Components {
             req.AttributeNames.Add("ApproximateFirstReceiveTimestamp");
 
             var result = new List<QueueMessage>(10);
-            var response = client.ReceiveMessage(req);
+            var response = _client.ReceiveMessage(req);
             if (response.Messages != null && response.Messages.Any()) {
                 DateTime epochDate = new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc);
                 foreach (Message msg in response.Messages) {
@@ -95,7 +93,7 @@ namespace AmazonSqs.Status.Components {
                                     qm.Sent = epochDate.AddMilliseconds(double.Parse(att.Value));
                                     break;
                                 case "ApproximateReceiveCount":
-                                    qm.ApproximateReceiveCount = Int32.Parse(att.Value);
+                                    qm.ApproximateReceiveCount = int.Parse(att.Value);
                                     break;
                                 case "ApproximateFirstReceiveTimestamp":
                                     qm.FirstReceived = epochDate.AddMilliseconds(double.Parse(att.Value));
@@ -112,7 +110,7 @@ namespace AmazonSqs.Status.Components {
         }
 
         public QueueAdmin(string awsAccessKey, string awsSecretKey) {
-            this.client = AWSClientFactory.CreateAmazonSQSClient(
+            this._client = new AmazonSQSClient(
                 awsAccessKey, awsSecretKey
             );
         }

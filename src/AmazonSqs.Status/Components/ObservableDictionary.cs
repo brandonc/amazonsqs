@@ -64,7 +64,7 @@ namespace AmazonSqs.Status.Components
             _keyedEntryCollection = new KeyedDictionaryEntryCollection<TKey>();
 
             foreach (KeyValuePair<TKey, TValue> entry in dictionary)
-                DoAddEntry((TKey)entry.Key, (TValue)entry.Value);
+                DoAddEntry(entry.Key, entry.Value);
         }
 
         public ObservableDictionary(IEqualityComparer<TKey> comparer)
@@ -77,7 +77,7 @@ namespace AmazonSqs.Status.Components
             _keyedEntryCollection = new KeyedDictionaryEntryCollection<TKey>(comparer);
 
             foreach (KeyValuePair<TKey, TValue> entry in dictionary)
-                DoAddEntry((TKey)entry.Key, (TValue)entry.Value);
+                DoAddEntry(entry.Key, entry.Value);
         }
 
         #endregion public
@@ -223,14 +223,12 @@ namespace AmazonSqs.Status.Components
 
         protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs args)
         {
-            if (CollectionChanged != null)
-                CollectionChanged(this, args);
-        }
+			CollectionChanged?.Invoke(this, args);
+		}
 
         protected virtual void OnPropertyChanged(string name)
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
+	        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         protected virtual bool RemoveEntry(TKey key)
@@ -509,12 +507,9 @@ namespace AmazonSqs.Status.Components
             get { return _keyedEntryCollection.Count; }
         }
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> kvp)
+	    bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> kvp)
         {
             return DoRemoveEntry(kvp.Key);
         }

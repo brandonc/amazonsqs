@@ -9,8 +9,8 @@
     <ProjectGuid>{E8BEDCC9-F5F0-466E-8B0C-FC6378930AE7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AmazonSqsObjectQueue.Tests</RootNamespace>
-    <AssemblyName>AmazonSqsObjectQueue.Tests</AssemblyName>
+    <RootNamespace>AmazonSqs.Tests</RootNamespace>
+    <AssemblyName>AmazonSqs.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -56,9 +56,6 @@
       <Project>{031F1702-89CB-41ED-9B9F-1BCF89FD21D6}</Project>
       <Name>AmazonSqs</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

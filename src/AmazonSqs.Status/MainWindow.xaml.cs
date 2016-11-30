@@ -21,8 +21,8 @@ namespace AmazonSqs.Status {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        private QueueAdmin queueAdmin;
-        private ObservableCollection<QueueDescription> queues;
+        private readonly QueueAdmin _queueAdmin;
+        private ObservableCollection<QueueDescription> _queues;
 
         public MainWindow() {
             InitializeComponent();
@@ -30,7 +30,7 @@ namespace AmazonSqs.Status {
             Config configForm = new Config();
             configForm.ShowDialog();
 
-            this.queueAdmin = new QueueAdmin(
+            _queueAdmin = new QueueAdmin(
                 Settings.Default.AwsAccessKey,
                 Settings.Default.AwsSecretKey
             );
@@ -39,11 +39,11 @@ namespace AmazonSqs.Status {
         }
 
         private void RefreshQueues() {
-            this.queues = this.queueAdmin.ListQueues();
-            this.gridQueues.ItemsSource = this.queues;
+            _queues = _queueAdmin.ListQueues();
+            gridQueues.ItemsSource = _queues;
 
-            foreach (QueueDescription desc in queues) {
-                this.queueAdmin.PopulateQueueAttributes(desc);
+            foreach (QueueDescription desc in _queues) {
+                _queueAdmin.PopulateQueueAttributes(desc);
             }
         }
 
@@ -52,24 +52,24 @@ namespace AmazonSqs.Status {
         }
 
         private void gridQueues_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e) {
-            if (this.gridQueues.SelectedItem is QueueDescription) {
-                QueueDescription qd = (QueueDescription)this.gridQueues.SelectedItem;
+            if (gridQueues.SelectedItem is QueueDescription) {
+                QueueDescription qd = (QueueDescription)gridQueues.SelectedItem;
 
-                this.gridMessages.ItemsSource = this.queueAdmin.ListTop10Messages(qd.Url);
+                gridMessages.ItemsSource = _queueAdmin.ListTop10Messages(qd.Url);
 
-                this.buttonDeleteQueue.IsEnabled = true;
+                buttonDeleteQueue.IsEnabled = true;
                 return;
             }
 
-            this.buttonDeleteQueue.IsEnabled = false;
+            buttonDeleteQueue.IsEnabled = false;
         }
 
         private void buttonDeleteQueue_Click(object sender, RoutedEventArgs e) {
             if (MessageBox.Show("Are you sure you want to permanently delete this queue and all messages within it?", "Confirmation", MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel) == MessageBoxResult.OK) {
                 MessageBox.Show("Deleted queues can take up to 60 seconds to be removed.", "Notice", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                QueueDescription qd = (QueueDescription)this.gridQueues.SelectedItem;
-                this.queueAdmin.DeleteQueue(qd.Url);
+                QueueDescription qd = (QueueDescription)gridQueues.SelectedItem;
+                _queueAdmin.DeleteQueue(qd.Url);
             }
         }
 

@@ -31,8 +31,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AWSSDK">
-      <HintPath>..\packages\AWSSDK.2.0.8.2\lib\net35\AWSSDK.dll</HintPath>
+    <Reference Include="AWSSDK.Core, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
+      <HintPath>..\packages\AWSSDK.Core.3.3.5\lib\net35\AWSSDK.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AWSSDK.SQS, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
+      <HintPath>..\packages\AWSSDK.SQS.3.3.1\lib\net35\AWSSDK.SQS.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -50,7 +55,11 @@
     <Compile Include="QueueException.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AvantPrime.AmazonSqs.nuspec" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\AWSSDK.SQS.3.3.1\analyzers\dotnet\cs\AWSSDK.SQS.CodeAnalysis.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
