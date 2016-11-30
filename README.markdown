@@ -1,5 +1,7 @@
 # Amazon SQS .NET Object Interface
 
+[![Build status](https://ci.appveyor.com/api/projects/status/76nk0rtv7sfti0vn?svg=true)](https://ci.appveyor.com/project/AvantPrime/amazonsqs)
+
 A higher-level interface to Amazon SQS for .NET. It features an object queue that serializes objects to JSON internally. Also included is a simple WPF app for observing queues and messages. Depends on the AWS SDK for .NET (included). 
 
 ## Example Usage
